@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 
 const Event = require("../../models/event");
 const User = require("../../models/user");
+const Booking = require("../../models/booking");
 
 const events = (eventIds) => {
   return Event.find({
@@ -18,6 +19,20 @@ const events = (eventIds) => {
       };
     });
   });
+};
+
+const singleEvent = async (eventId) => {
+  try {
+    const event = await Event.findById(eventId);
+
+    return {
+      ...event._doc,
+      _id: event.id,
+      creator: user.bind(this, event.creator),
+    };
+  } catch (err) {
+    throw err;
+  }
 };
 const user = (userId) => {
   return User.findById(userId)
@@ -51,14 +66,24 @@ module.exports = {
         console.log(err);
       });
   },
+  bookings: async () => {
+    try {
+      const bookings = await Booking.find();
+      return bookings.map((booking) => {
+        return {
+          ...booking._doc,
+          id: booking.id,
+          user: user.bind(this, booking._doc.user),
+          event: singleEvent.bind(this, booking._doc.event),
+          createdAt: new Date(booking._doc.createdAt).toISOString(),
+          updatedAt: new Date(booking._doc.updatedAt).toISOString(),
+        };
+      });
+    } catch (err) {
+      throw err;
+    }
+  },
   createEvent: (args) => {
-    // const event = {
-    //   _id: Math.random().toString(),
-    //   title: args.eventInput.title,
-    //   description: args.eventInput.description,
-    //   price: +args.eventInput.price,
-    //   date: args.eventInput.date,
-    // };
     const event = new Event({
       title: args.eventInput.title,
       description: args.eventInput.description,
@@ -114,5 +139,21 @@ module.exports = {
       .catch((err) => {
         throw err;
       });
+  },
+  bookEvent: async (args) => {
+    const fetchedEvent = await Event.findOne({ _id: args.eventId });
+    const booking = new Booking({
+      userId: "62f001a1953b896a75b38bfd",
+      event: fetchedEvent,
+    });
+    const result = await booking.save();
+    return {
+      ...result._doc,
+      _id: result.id,
+      user: user.bind(this, booking._doc.user),
+      event: singleEvent.bind(this, booking._doc.event),
+      createdAt: new Date(result._doc.createdAt).toISOString(),
+      updatedAt: new Date(result._doc.updatedAt).toISOString(),
+    };
   },
 };
