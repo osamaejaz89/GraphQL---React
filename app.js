@@ -3,19 +3,20 @@ const bodyParser = require("body-parser");
 const { graphqlHTTP } = require("express-graphql");
 const mongoose = require("mongoose");
 
-
-const graphqlSchema = require('./graphql/schema/index.js')
-const graphqlResolver = require('./graphql/resolvers/index.js')
+const graphQlSchema = require("./graphql/schema/index");
+const graphQlResolvers = require("./graphql/resolvers/index");
+const isAuth = require("./middleware/is-auth");
 
 const app = express();
 
 app.use(bodyParser.json());
 
+app.use(isAuth);
 app.use(
   "/graphql",
   graphqlHTTP({
-    schema: graphqlSchema,
-    rootValue: graphqlResolver,
+    schema: graphQlSchema,
+    rootValue: graphQlResolvers,
     graphiql: true,
   })
 );
